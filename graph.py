@@ -307,11 +307,11 @@ class ImageGraph:
             current_index = queue.dequeue() 
             current_vertex = self.vertices[current_index] 
 
-        for neighbor_index in current_vertex.edges:
-            neighbor_vertex = self.vertices[neighbor_index]
-            if not neighbor_vertex.visited and neighbor_vertex.color == current_vertex.color:
-                neighbor_vertex.visit_and_set_color(color)
-                queue.enqueue(neighbor_index)
+            for neighbor_index in current_vertex.edges:
+                neighbor_vertex = self.vertices[neighbor_index]
+                if not neighbor_vertex.visited and neighbor_vertex.color == current_vertex.color:
+                    neighbor_vertex.visit_and_set_color(color)
+                    queue.enqueue(neighbor_index)
 
         self.print_image()
 
@@ -357,22 +357,7 @@ class ImageGraph:
                 if not neighbor_index.visited and neighbor_index.color == current_vertex.color:
                     neighbor_index.visit_and_set_color(color)
                     stack.push(neighbor_index)
-              """      
-        for vertex_index, vertex in enumerate(self.vertices):
-            if not vertex.visited:
-                stack.push(vertex_index)
-                vertex.visit_and_set_color(color)  # Mark as visited
-                while not stack.is_empty():
-                    current_index = stack.pop()
-                    current_vertex = self.vertices[current_index]
 
-                    # Explore all neighbors of the current vertex
-                    for neighbor_index in current_vertex.edges:
-                        neighbor_vertex = self.vertices[neighbor_index]
-                        if not neighbor_vertex.visited and neighbor_vertex.color == current_vertex.color:
-                            neighbor_vertex.visit_and_set_color(color)
-                            stack.push(neighbor_index)
-                            """
         self.print_image()
 
 
@@ -392,7 +377,7 @@ def create_graph(data):
 
     # get size of image and number of vertices
     image_size = int(lines[0])
-    num_of_verteces = int(lines[1])
+    num_of_vertices = int(lines[1])
 
     # create the ImageGraph
     image_graph = ImageGraph(image_size)
@@ -409,9 +394,9 @@ def create_graph(data):
     # connect vertex A to vertex B and the other way around
     for i in range(2 + num_of_verteces, len(lines) - 1):
         line = lines[i].strip()
-        if line:  # Only process non-empty lines
-            parts = line.split(',')  # Split the line by comma
-            if len(parts) == 2:  # Ensure that there are exactly two values
+        if line:  
+            parts = line.split(',') 
+            if len(parts) == 2: 
                 u = int(parts[0])
                 v = int(parts[1])
                 vertices[u].add_edge(v)
