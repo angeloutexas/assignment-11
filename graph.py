@@ -16,37 +16,8 @@ UT EID 1:
 UT EID 2:
 """
 
+# TODO: Delete this import if you choose not to use it. Delete this comment when you are done.
 import sys
-
-# -----------------------PRINTING LOGIC, DON'T WORRY ABOUT THIS PART----------------------------
-RESET_CHAR = "\u001b[0m"  # Code to reset the terminal color
-COLOR_DICT = {
-    "black": "\u001b[30m",
-    "red": "\u001b[31m",
-    "green": "\u001b[32m",
-    "yellow": "\u001b[33m",
-    "blue": "\u001b[34m",
-    "magenta": "\u001b[35m",
-    "cyan": "\u001b[36m",
-    "white": "\u001b[37m",
-}
-BLOCK_CHAR = "\u2588"  # Character code for a block
-
-
-def colored(text, color):
-    """Wrap the string with the color code."""
-    color = color.strip().lower()
-    if color not in COLOR_DICT:
-        raise ValueError(color + " is not a valid color!")
-    return COLOR_DICT[color] + text
-
-
-def print_block(color):
-    """Print a block in the specified color."""
-    print(colored(BLOCK_CHAR, color) * 2, end="")
-
-
-# -----------------------PRINTING LOGIC, DON'T WORRY ABOUT THIS PART----------------------------
 
 
 class Node:
@@ -194,258 +165,219 @@ class Queue:
         return self._size
 
 
-class ColoredVertex:
-    """Class for a graph vertex."""
+class Vertex:
+    """Vertex Class using properties and setters for better encapsulation."""
 
-    def __init__(self, index, x, y, color):
-        self.index = index
-        self.color = color
-        self.prev_color = color
-        self.x = x
-        self.y = y
-        self.edges = []
+    def __init__(self, label):
+        self.__label = label
         self.visited = False
 
-    def add_edge(self, vertex_index):
-        """Add an edge to another vertex."""
-        self.edges.append(vertex_index)
+    @property
+    def visited(self):
+        """Property to get the visited status of the vertex."""
+        return self.__visited
 
-    def visit_and_set_color(self, color):
-        """Set the color of the vertex and mark it visited."""
-        self.visited = True
-        self.prev_color = self.color
-        self.color = color
-        print("Visited vertex " + str(self.index))
+    @visited.setter
+    def visited(self, value):
+        """Setter to set the visited status of the vertex."""
+        if isinstance(value, bool):
+            self.__visited = value
+        else:
+            raise ValueError("Visited status must be a boolean value.")
+
+    @property
+    def label(self):
+        """Property to get the label of the vertex."""
+        return self.__label
 
     def __str__(self):
-        return f"index: {self.index}, color: {self.color}, x: {self.x}, y: {self.y}"
+        """String representation of the vertex"""
+        return str(self.__label)
 
 
-class ImageGraph:
-    """Class for the graph."""
+class Graph:
+    """A Class to present Graph."""
 
-    def __init__(self, image_size):
-        self.vertices = []
-        self.image_size = image_size
+    def __init__(self):
+        self.vertices = []  # a list of vertex objects
+        self.adjacency_matrix = []  # adjacency matrix of edges
 
-    def print_image(self):
-        """Print the image formed by the vertices."""
-        img = [
-            ["black" for _ in range(self.image_size)] for _ in range(self.image_size)
-        ]
+    def has_vertex(self, label):
+        """Check if a vertex is already in the graph"""
+        num_vertices = len(self.vertices)
+        for i in range(num_vertices):
+            if label == self.vertices[i].label:
+                return True
+        return False
 
-        # Fill img array
-        for vertex in self.vertices:
-            img[vertex.y][vertex.x] = vertex.color
+    def get_index(self, label):
+        """Given a label get the index of a vertex"""
+        num_vertices = len(self.vertices)
+        for i in range(num_vertices):
+            if label == self.vertices[i].label:
+                return i
+        return -1
 
-        for line in img:
-            for pixel in line:
-                print_block(pixel)
-            print()
-        # Print new line/reset color
-        print(RESET_CHAR)
+    def add_vertex(self, label):
+        """Add a Vertex with a given label to the graph"""
+        if self.has_vertex(label):
+            return
 
-    def reset_visited(self):
-        """Reset the visited flag for all vertices."""
-        for vertex in self.vertices:
-            vertex.visited = False
+        # add vertex to the list of vertices
+        self.vertices.append(Vertex(label))
 
-    def create_adjacency_matrix(self):
+        # add a new column in the adjacency matrix
+        num_vertices = len(self.vertices)
+        for i in range(num_vertices - 1):
+            self.adjacency_matrix[i].append(0)
+
+        # add a new row for the new vertex
+        new_row = []
+        for i in range(num_vertices):
+            new_row.append(0)
+        self.adjacency_matrix.append(new_row)
+
+    def add_edge(self, start, finish):
+        """Add unweighted directed edge to graph"""
+        self.adjacency_matrix[start][finish] = 1
+
+    def get_adjacent_vertices(self, vertex_index):
+        """Return adjacent vertex indices to vertex_index"""
+        vertices = []
+        num_vertices = len(self.vertices)
+        for j in range(num_vertices):
+            if self.adjacency_matrix[vertex_index][j]:
+                vertices.append(j)
+        return vertices
+
+
+    # TODO: Modify this method. You may delete this comment when you are done.
+    def has_cycle(self):
         """
-        Creates and returns the adjacency matrix for the graph.
-
-        post: return a 2D list of integers representing the adjacency matrix.
+        Determine whether or not the graph has a cycle.
+        
+        post: returns True if there is a cycle and False otherwise.
         """
-        vertices = self.vertices
+        visited = set()
+        recursion_stack = set()
+        def dfs(values):
 
-        size = len(vertices)
-        matrix = [[0] * size for _ in range(size)]
+            visited.add(values)
+            recursion_stack.add(values)
 
-        for item in vertices:
-            for neighbor in item.edges:
-                matrix[item.index][neighbor] = 1
-                matrix[neighbor][item.index] = 1
+            for neighbor in self.get_adjacent_vertices(v):
+                if neighbor not in visited:
+                    if dfs(neighbor):
+                        return True
+                elif neighbor in recursion_stack:
+                    return True
 
-        return matrix
+            recursion_stack.remove(values)
+            return False
 
+        for i in range(len(self.vertices)):
+            if i not in visited:
+                if dfs(i):
+                    return True
+        return False
 
-
-
-    def bfs(self, start_index, color):
-        """
-        You must implement this algorithm using a Queue.
-
-        Performs a Breadth-First Search (BFS) starting from a given vertex, changing
-        all vertices that are adjacent and share the same color as the starting
-        vertex's color to the given color. Think of how an image bucket fill will
-        only change all same colored pixels that are in contact with each other.
-
-        Do not remove the first 2 statements we provide.
-        you may choose to call print_images in this method debugging yourself
-
-
-        This method assumes that the pre conditions have been handled before
-        calling this method.
-
-        pre: start_index is a valid integer representing the index of the starting
-             vertex in the vertices instance variable.
-             color: The color to change vertices to during the DFS traversal
-
-        post: every vertex that matches the start index's color will be recolored
-              to the given color
-        """
-
-        self.reset_visited()
-        self.print_image()
-
-        queue = Queue()
-        queue.enqueue(start_index)
-
-        self.vertices[start_index].visit_and_set_color(color)
-
-        while not queue.is_empty():
-            current_index = queue.dequeue() 
-            current_vertex = self.vertices[current_index] 
-
-            for neighbor_index in current_vertex.edges:
-                neighbor_vertex = self.vertices[neighbor_index]
-                if not neighbor_vertex.visited and neighbor_vertex.color == current_vertex.color:
-                    neighbor_vertex.visit_and_set_color(color)
-                    queue.enqueue(neighbor_index)
-
-        self.print_image()
-
-
-    def dfs(self, start_index, color):
-        """
-        You must implement this algorithm using a Stack WITHOUT using recursion.
-
-        Performs a Depth-First Search (DFS) starting from a given vertex, changing
-        all vertices that are adjacent and share the same color as the starting
-        vertex's color to the given color. Think of how an image bucket fill will
-        only change all same colored pixels that are in contact with each other.
-
-        Do not remove the first 2 statements we provide.
-        you may choose to call print_images in this func method debugging yourself
-
-
-        This method assumes that the pre conditions have been handled before
-        calling this method.
-
-        pre: start_index is a valid integer representing the index of the starting
-             vertex in the vertices instance variable.
-             color: The color to change vertices to during the DFS traversal
-
-        post: every vertex that matches the start index's color will be recolored
-              to the given color
-        """
-
-        self.reset_visited()
-        self.print_image()
-
-        stack = Stack()
-        stack.push(start_index)
-
-        self.vertices[start_index].visit_and_set_color(color)
-
-        while not stack.is_empty():
-            current_index = stack.pop() 
-            current_vertex = self.vertices[current_index] 
-
-            for neighbor_index in current_vertex.edges:
-                neighbor_index = self.vertices[neighbor_index]
-                if not neighbor_index.visited and neighbor_index.color == current_vertex.color:
-                    neighbor_index.visit_and_set_color(color)
-                    stack.push(neighbor_index)
-
-        self.print_image()
-
-
-# TODO: Modify this function. You may delete this comment when you are done.
-def create_graph(data):
-    """
-    Creates a Graph object from the given input data and parses the starting
-    position and search color.
-
-    pre: data is the entire inputted data as a single string.
-
-    post: a tuple containing the ImageGraph instance, the starting position,
-          and the search color.
-    """
-    # split the data by new line
-    lines = data.splitlines()
-
-    # get size of image and number of vertices
-    image_size = int(lines[0])
-    num_of_vertices = int(lines[1])
-
-    # create the ImageGraph
-    image_graph = ImageGraph(image_size)
-
-    # create vertices - vertex info has the format "x,y,color"
-    vertices = []
-    for i in range(2, 2 + num_of_verteces):
-        x, y, color = lines[i].split(',')
-        vertices.append(ColoredVertex(i- 2, int(x), int(y), color))
     
-    image_graph.vertices += vertices
 
-    # create edges between vertices - edge info has the format "from_index,to_index"
-    # connect vertex A to vertex B and the other way around
-    for i in range(2 + num_of_verteces, len(lines) - 1):
-        line = lines[i].strip()
-        if line:  
-            parts = line.split(',') 
-            if len(parts) == 2: 
-                u = int(parts[0])
-                v = int(parts[1])
-                vertices[u].add_edge(v)
-                vertices[v].add_edge(u)
 
-        # u, v = lines[i].split(',') 
-        # u == int(u), v == int(v)
-        # vertices[u].add_edge(v)
-        # vertices[v].add_edge(u)
 
-    # read search starting position and color
-    start_index, color = lines[-1].split(',')
-    start_index = int(start_index)
-    color = color.strip()  # The color to search for
 
-    # return the ImageGraph, starting position, and color as a tuple in this order.
-    return image_graph, start_index, color
 
+    def get_registration_plan(self):
+        """
+        Return a valid ordering of courses to take for registration as a 2D
+        list of vertex labels, where each inner list will be a maximum of 4.
+
+        pre: a valid registration plan exists.
+        post: returns a 2D list of strings, where each inner list represents a semester
+        """
+
+        temp_vertices = list(self.vertices)
+        temp_matrix = [row[:] for row in self.adjacency_matrix]
+
+        def get_index_from_copy(label, vertices_copy):
+            """Given a label get the index of a vertex in the copy of the vertices list"""
+            num_vertices = len(vertices_copy)
+            for i in range(num_vertices):
+                if label == vertices_copy[i].label:
+                    return i
+            return -1
+
+        def delete_vertex_from_copy(vertex_label, adjacency_matrix_copy, vertices_copy):
+            """delete vertex from the copy of the adjacency matrix and vertices list"""
+            index = self.get_index(vertex_label)
+            adjacency_matrix_copy.pop(index)
+            for row in adjacency_matrix_copy:
+                row.pop(index)
+            vertices_copy.pop(index)
+
+        courses = []
+
+        while temp_vertices:
+            semester_courses = [vertex.label for i, vertex in enumerate(temp_vertices) if sum(temp_matrix[i]) == 0]
+            semester_courses = semester_courses[:4]
+            courses.append(semester_courses)
+
+            for course in semester_courses:
+                delete_vertex_from_copy(course, temp_matrix, temp_vertices)
+
+        return courses
 
 
 # TODO: Modify this function. You may delete this comment when you are done.
 def main():
     """
-    The main function that drives the program execution.
-
-    This function will not be tested, but you should
-    implement it to test your code visually.
+    The main function to retrieve a registration plan.
+    The output code has been written for you.
     """
 
-    # Step 1: Read all input as a single string
-    data = sys.stdin.read()
+    # create a Graph object
+    graph = Graph()
 
-    # Step 2: Create the graph using the `create_graph` function
-    image_graph, start_index, color = create_graph(data)
+    # read the number of vertices
+    num_vertices = int(input("Enter the number of vertices: "))
+    for _ in range(num_vertices):
+        vertex_label = input("Enter vertex label: ")
+        graph.add_vertex(vertex_label)
 
-    # Step 3: Print the adjacency matrix in a readable format
-    print("Adjacency Matrix:")
-    matrix = image_graph.create_adjacency_matrix()
-    for row in matrix:
-        print(row)
 
-    # Step 4: Run BFS starting from the given start_index with the given color
-    print("\nRunning BFS:")
-    image_graph.bfs(start_index, color)
+    # read the number of edges
+    num_edges = int(input("Enter the number of edges: "))
+    for _ in range(num_edges):
+        start, finish = input("Enter edge (start finish): ").split()
+        start_index = graph.get_index(start)
+        finish_index = graph.get_index(finish)
+        graph.add_edge(start_index, finish_index)
 
-    # Step 5: Reset the graph and run DFS starting from the same start_index with the given color
-    print("\nRunning DFS:")
-    image_graph.dfs(start_index, color)
+    if graph.has_cycle():
+        print("Registration plan invalid because a cycle was detected.")
+    else:
+        print("Valid registration plan detected.")
+        courses = graph.get_registration_plan()
+        print("Registration plan:")
+        for semester in courses:
+            print(semester)
 
+    # read the edges and insert them into the graph
+   
+    # you will need to call the method to convert them from their labels to their index
+
+    ####################################################################################
+    # DO NOT CHANGE ANYTHING BELOW THIS
+    if graph.has_cycle():
+        print("Registration plan invalid because a cycle was detected.")
+    else:
+        print("Valid registration plan detected.")
+
+        courses = graph.get_registration_plan()
+        print()
+        print("Registration plan: ")
+        for semester in courses:
+            print(semester)
 
 if __name__ == "__main__":
     main()
