@@ -357,7 +357,7 @@ class ImageGraph:
                 if not neighbor_index.visited and neighbor_index.color == current_vertex.color:
                     neighbor_index.visit_and_set_color(color)
                     stack.push(neighbor_index)
-                    
+              """      
         for vertex_index, vertex in enumerate(self.vertices):
             if not vertex.visited:
                 stack.push(vertex_index)
@@ -372,6 +372,7 @@ class ImageGraph:
                         if not neighbor_vertex.visited and neighbor_vertex.color == current_vertex.color:
                             neighbor_vertex.visit_and_set_color(color)
                             stack.push(neighbor_index)
+                            """
         self.print_image()
 
 
